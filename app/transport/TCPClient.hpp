@@ -1,4 +1,4 @@
-#pragma once
+#pragma  once
 
 
 #include <sys/socket.h>
@@ -7,18 +7,18 @@
 #include <unistd.h>
 #include <cstring>
 
-#include<string_view>
-#include<string>
+#include <string_view>
+#include <string>
 
 #include "../models/SocketGuard.hpp"
 #include "../utils/errors.hpp"
 
 class TCPClient
 {
-    SocketGuard client_fd;
+    SocketGuard _client_fd;
 
     public:
-        TCPClient() : client_fd{-1} {}
+        TCPClient() : _client_fd{-1} {}
 
         void connect(std::string_view server_ip = "127.0.0.1", const uint16_t port = 8080)
         {
@@ -44,7 +44,7 @@ class TCPClient
                 if(::connect(temp_fd.get(), it->ai_addr, it->ai_addrlen)==0)
                 {
                     connected = true;
-                    client_fd = std::move(temp_fd);
+                    _client_fd = std::move(temp_fd);
                 }
             }
 
@@ -53,7 +53,7 @@ class TCPClient
             if(!connected)
                 throw_errno("Failed to connect to the server");
 
-            client_fd.set_options(
+            _client_fd.set_options(
                 std::make_tuple(IPPROTO_TCP,  TCP_NODELAY,   1),
                 std::make_tuple(SOL_SOCKET ,  SO_KEEPALIVE,  1),
                 std::make_tuple(IPPROTO_TCP,  TCP_KEEPIDLE,  120),

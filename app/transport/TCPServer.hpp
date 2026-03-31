@@ -1,4 +1,4 @@
-#pragma once
+#pragma  once
 
 
 #include <sys/socket.h>
@@ -12,24 +12,24 @@
 
 class TCPServer
 {
-    SocketGuard server_fd;
-    sockaddr_in addr;
+    SocketGuard _server_fd;
+    sockaddr_in _addr;
 
     public:
-        TCPServer() : server_fd{-1}, addr{} {}
+        TCPServer() : _server_fd{-1}, _addr{} {}
 
         void init(const uint16_t port = 8080)
         {
             if(
-                server_fd = SocketGuard(socket(AF_INET, SOCK_STREAM, 0));
-                server_fd.get() == -1
+                _server_fd = SocketGuard(socket(AF_INET, SOCK_STREAM, 0));
+                _server_fd.get() == -1
             ) throw_errno("Init, socket");
 
-            addr.sin_family      = AF_INET;
-            addr.sin_port        = htons(port);
-            addr.sin_addr.s_addr = INADDR_ANY;
+            _addr.sin_family      = AF_INET;
+            _addr.sin_port        = htons(port);
+            _addr.sin_addr.s_addr = INADDR_ANY;
 
-            server_fd.set_options(
+            _server_fd.set_options(
                 std::make_tuple(SOL_SOCKET ,  SO_REUSEADDR,  1),
                 std::make_tuple(IPPROTO_TCP,  TCP_NODELAY,   1),
                 std::make_tuple(SOL_SOCKET ,  SO_KEEPALIVE,  1),
@@ -38,7 +38,7 @@ class TCPServer
                 std::make_tuple(IPPROTO_TCP,  TCP_KEEPCNT,   3)
             );
 
-            if(bind(server_fd.get(), (sockaddr*)&addr, sizeof(addr))<0)
+            if(bind(_server_fd.get(), (sockaddr*)&_addr, sizeof(_addr))<0)
                 throw_errno("Init, bind");
 
             //* Add epoll
@@ -48,7 +48,7 @@ class TCPServer
         {
             //* Nonblock socket whith epoll
 
-            if(::listen(server_fd.get(), max_half_open_cons)<0)
+            if(::listen(_server_fd.get(), max_half_open_cons)<0)
                 throw_errno("Listen");
 
             //* Add epoll
@@ -63,7 +63,7 @@ class TCPServer
             int con_fd;
 
             if(
-                con_fd = ::accept(server_fd.get(), (sockaddr*)&con_addr, &con_addr_len);
+                con_fd = ::accept(_server_fd.get(), (sockaddr*)&con_addr, &con_addr_len);
                 con_fd == -1    
             ) throw_errno("Accept");
 

@@ -1,4 +1,4 @@
-#pragma once
+#pragma  once
 
 
 #include <sys/socket.h>
@@ -11,37 +11,37 @@
 
 class SocketGuard
 {
-    private:
-        int fd;
+    int _fd;
+    
     public:
-        explicit SocketGuard(): fd{-1} {}
+        explicit SocketGuard(): _fd{-1} {}
 
-        explicit SocketGuard(int socket_fd) : fd{socket_fd}{}
+        explicit SocketGuard(int socket_fd) : _fd{socket_fd}{}
 
         SocketGuard(SocketGuard&) = delete;
         SocketGuard operator=(SocketGuard&) = delete;
 
-        SocketGuard(SocketGuard&& other) : fd{-1}
+        SocketGuard(SocketGuard&& other) : _fd{-1}
         {
-            fd = other.fd;
-            other.fd = -1;
+            _fd = other._fd;
+            other._fd = -1;
         }
 
         SocketGuard& operator=(SocketGuard&& other)
         {
-            if(fd!=-1)
-                ::close(fd);
+            if(_fd!=-1)
+                ::close(_fd);
 
-            fd = other.fd;
-            other.fd = -1;
+            _fd = other._fd;
+            other._fd = -1;
 
             return *this;
         }
 
         void set_nonblock()
         {
-            int flags = fcntl(fd, F_GETFL);
-            fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+            int flags = fcntl(_fd, F_GETFL);
+            fcntl(_fd, F_SETFL, flags | O_NONBLOCK);
         }
 
         using OPTION = std::tuple<int, int, int>;
@@ -57,30 +57,29 @@ class SocketGuard
             auto set_option = [this](OPTION option) mutable
             {
                 auto [level, optname, opt] = option;
-                if(setsockopt(fd, level, optname, &opt, sizeof(opt))<0)
+                if(setsockopt(_fd, level, optname, &opt, sizeof(opt))<0)
                     throw_errno("SocketGuard, set_options");
             };
 
-            (set_option(tuples), ...);
-            
+            (set_option(tuples), ...);    
         }
 
-        const int& get(){return fd;}
+        const int& get(){return _fd;}
 
-        int release(){int f = fd; fd = -1; return f;}
+        int release(){int f = _fd; _fd = -1; return f;}
 
         void close()
         {
-            if(fd != -1)
+            if(_fd != -1)
             {
-                ::close(fd);
-                fd = -1;
+                ::close(_fd);
+                _fd = -1;
             }
         }
 
         ~SocketGuard()
         {
-            if(fd !=-1) ::close(fd);
+            if(_fd !=-1) ::close(_fd);
         }
 };
 
