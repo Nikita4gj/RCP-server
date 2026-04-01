@@ -9,7 +9,7 @@
 
 #include "utils.hpp"
 
-namespace tuple_utils
+namespace rpc::utils::tuple
 {
     namespace detail
     {
@@ -17,6 +17,7 @@ namespace tuple_utils
         using _tuple_element_forward_t = forward_like_t<Tuple, std::tuple_element_t<Indx, std::remove_reference_t<Tuple>>>;
     }
 
+    //* Add is_tuple_like
     template<class Tuple>
     concept is_tuple = requires(Tuple tuple)
     {
@@ -30,6 +31,7 @@ namespace tuple_utils
         return (std::invocable<Func, detail::_tuple_element_forward_t<Is, Tuple>> && ...);
     }(std::make_index_sequence<std::tuple_size_v<std::remove_cvref_t<Tuple>>>{});
 
+    //* add apply_transform
     template<is_tuple Tuple, tuple_for_each_invocable<Tuple> Func>
     void apply_for_each(Tuple&& tuple, Func&& func)
     {

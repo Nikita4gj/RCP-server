@@ -8,9 +8,9 @@
 
 int main()
 {
-    SocketGuard fd;
+    rpc::models::SocketGuard fd;
 
-    fd = SocketGuard(socket(AF_INET, SOCK_STREAM, 0));
+    fd = rpc::models::SocketGuard(socket(AF_INET, SOCK_STREAM, 0));
 
     try{
         fd.set_options(

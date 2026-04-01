@@ -5,6 +5,7 @@
 #include "../app/transport/TCPServer.hpp"
 #include "../app/transport/TCPClient.hpp"
 
+using rpc::net::TCPClient, rpc::net::TCPServer;
 using namespace std::chrono_literals;
 
 int main()

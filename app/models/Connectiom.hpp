@@ -5,8 +5,11 @@
 
 #include "SocketGuard.hpp"
 
-struct Connection
+namespace rpc::models
 {
-    SocketGuard fd;
-    sockaddr_in addr;
-};
+    struct Connection
+    {
+        SocketGuard fd;
+        sockaddr_in addr;
+    };
+}

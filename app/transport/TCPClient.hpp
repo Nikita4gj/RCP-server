@@ -13,53 +13,56 @@
 #include "../models/SocketGuard.hpp"
 #include "../utils/errors.hpp"
 
-class TCPClient
+namespace rpc::net
 {
-    SocketGuard _client_fd;
-
-    public:
-        TCPClient() : _client_fd{-1} {}
-
-        void connect(std::string_view server_ip = "127.0.0.1", const uint16_t port = 8080)
-        {
-            addrinfo hints{}, *res;
-
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            
-            if(
-                auto rc = getaddrinfo(server_ip.data(), std::to_string(port).c_str(), &hints, &res);
-                rc != 0    
-            ) throw_gaierror("Connect, getaddrinfo", rc);
-
-            bool connected = false;
-
-            for(auto it = res; it != nullptr && !connected; it = it->ai_next)
+    class TCPClient
+    {
+        rpc::models::SocketGuard _client_fd;
+    
+        public:
+            TCPClient() : _client_fd{-1} {}
+    
+            void connect(std::string_view server_ip = "127.0.0.1", const uint16_t port = 8080)
             {
-                SocketGuard temp_fd {socket(it->ai_family, it->ai_socktype, 0)};
-
-                if(temp_fd.get() == -1)
-                    continue;
-
-                if(::connect(temp_fd.get(), it->ai_addr, it->ai_addrlen)==0)
+                addrinfo hints{}, *res;
+    
+                hints.ai_family = AF_INET;
+                hints.ai_socktype = SOCK_STREAM;
+                
+                if(
+                    auto rc = getaddrinfo(server_ip.data(), std::to_string(port).c_str(), &hints, &res);
+                    rc != 0    
+                ) rpc::utils::errors::throw_gaierror("Connect, getaddrinfo", rc);
+    
+                bool connected = false;
+    
+                for(auto it = res; it != nullptr && !connected; it = it->ai_next)
                 {
-                    connected = true;
-                    _client_fd = std::move(temp_fd);
+                    rpc::models::SocketGuard temp_fd {socket(it->ai_family, it->ai_socktype, 0)};
+    
+                    if(temp_fd.get() == -1)
+                        continue;
+    
+                    if(::connect(temp_fd.get(), it->ai_addr, it->ai_addrlen)==0)
+                    {
+                        connected = true;
+                        _client_fd = std::move(temp_fd);
+                    }
                 }
+    
+                freeaddrinfo(res);
+    
+                if(!connected)
+                    rpc::utils::errors::throw_errno("Failed to connect to the server");
+    
+                _client_fd.set_options(
+                    std::make_tuple(IPPROTO_TCP,  TCP_NODELAY,   1),
+                    std::make_tuple(SOL_SOCKET ,  SO_KEEPALIVE,  1),
+                    std::make_tuple(IPPROTO_TCP,  TCP_KEEPIDLE,  120),
+                    std::make_tuple(IPPROTO_TCP,  TCP_KEEPINTVL, 20),
+                    std::make_tuple(IPPROTO_TCP,  TCP_KEEPCNT,   3)
+                );
             }
-
-            freeaddrinfo(res);
-
-            if(!connected)
-                throw_errno("Failed to connect to the server");
-
-            _client_fd.set_options(
-                std::make_tuple(IPPROTO_TCP,  TCP_NODELAY,   1),
-                std::make_tuple(SOL_SOCKET ,  SO_KEEPALIVE,  1),
-                std::make_tuple(IPPROTO_TCP,  TCP_KEEPIDLE,  120),
-                std::make_tuple(IPPROTO_TCP,  TCP_KEEPINTVL, 20),
-                std::make_tuple(IPPROTO_TCP,  TCP_KEEPCNT,   3)
-            );
-        }
-};
+    };
+}
 
